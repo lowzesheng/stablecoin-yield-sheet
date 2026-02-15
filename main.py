@@ -12,9 +12,21 @@ Usage:
 """
 
 import argparse
+import os
 import sys
 import time
 from datetime import datetime
+from pathlib import Path
+
+# Load .env file if present (no dependency needed)
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _, _val = _line.partition("=")
+                os.environ.setdefault(_key.strip(), _val.strip())
 
 from fetchers.defillama import fetch_pools, filter_lending_pools, fetch_native_yields
 from fetchers.ethena import fetch_ethena_yield
