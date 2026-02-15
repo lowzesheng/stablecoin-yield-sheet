@@ -1,0 +1,5 @@
+requests>=2.31.0
+
+# Optional: Google Sheets export
+# google-api-python-client>=2.100.0
+# google-auth>=2.23.0

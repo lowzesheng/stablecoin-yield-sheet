@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Data (local history, regenerated each run)
+data/history.json
+
+# Output (regenerated each run)
+output/
+
+# Secrets
+.env
+*.json
+!package.json
+
+# IDE
+.vscode/
+.idea/
