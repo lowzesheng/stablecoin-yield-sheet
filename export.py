@@ -42,7 +42,7 @@ def _fmt_usd(val) -> str:
 def _fmt_wow(val) -> str:
     """Format WoW change with +/- sign."""
     if val is None:
-        return "—"
+        return "-"
     sign = "+" if val > 0 else ""
     return f"{sign}{val:.2f}%"
 
@@ -61,7 +61,7 @@ def export_native_yields_csv(native_yields: list) -> str:
         "Source of Yield", "Risk Rating",
     ]
 
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         for row in native_yields:
@@ -92,7 +92,7 @@ def export_supply_rates_csv(lending: list) -> str:
         "WoW Change", "TVL", "Utilisation",
     ]
 
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         for row in lending:
@@ -128,7 +128,7 @@ def export_borrow_rates_csv(lending: list) -> str:
         "WoW Change", "Available Liquidity",
     ]
 
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         for row in borrow_pools:
@@ -153,7 +153,7 @@ def export_macro_csv(macro: dict) -> str:
     _ensure_output_dir()
     path = os.path.join(OUTPUT_CSV_DIR, "macro.csv")
 
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Metric", "Value"])
         writer.writerow(["Fed Funds Rate", _fmt_pct(macro.get("fed_funds_rate"))])
@@ -270,7 +270,7 @@ def export_summary(native_yields: list, lending: list, macro: dict) -> str:
     lines.append("")
 
     text = "\n".join(lines)
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(text)
 
     print(f"[OK] {path}")
