@@ -102,7 +102,7 @@ ETHENA_YIELD_URL = "https://ethena.fi/api/yields/protocol-and-staking-yield"
 MAKERDAO_DSR_URL = "https://yields.llama.fi/pools"  # Filtered via DeFi Llama
 
 FRED_API_URL = "https://api.stlouisfed.org/fred/series/observations"
-FRED_API_KEY = ""  # Set via env var FRED_API_KEY or paste here
+FRED_API_KEY = "a48059706c1af5881ea026b362a1b869"
 
 # ---------------------------------------------------------------------------
 # Output
