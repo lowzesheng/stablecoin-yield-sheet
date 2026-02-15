@@ -483,7 +483,12 @@ def export_all(native_yields: list, lending: list, macro: dict) -> None:
     export_supply_rates_csv(lending)
     export_borrow_rates_csv(lending)
     export_macro_csv(macro)
-    export_combined_xlsx(native_yields, lending, macro)
+
+    try:
+        export_combined_xlsx(native_yields, lending, macro)
+    except Exception as e:
+        print(f"[ERR] Excel export failed: {e}")
+
     summary = export_summary(native_yields, lending, macro)
     export_to_google_sheets(native_yields, lending, macro)
 
