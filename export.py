@@ -377,12 +377,113 @@ def export_to_google_sheets(native_yields: list, lending: list, macro: dict) -> 
         return False
 
 
+def export_combined_xlsx(native_yields: list, lending: list, macro: dict) -> str:
+    """Export all data into a single Excel workbook with multiple sheets."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, numbers
+
+    _ensure_output_dir()
+    path = os.path.join(OUTPUT_CSV_DIR, "stablecoin_yields.xlsx")
+
+    wb = Workbook()
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
+    pct_fmt = '0.00"%"'
+
+    def _style_header(ws):
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center")
+
+    def _auto_width(ws):
+        for col in ws.columns:
+            max_len = max((len(str(c.value or "")) for c in col), default=10)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 3, 30)
+
+    # ── Sheet 1: Native Yields ──
+    ws = wb.active
+    ws.title = "Native Yields"
+    ws.append(["Token", "Protocol", "APY", "WoW Change", "TVL", "Source of Yield", "Risk Rating"])
+    _style_header(ws)
+    for r in native_yields:
+        meta = NATIVE_YIELD_TOKENS.get(r["token"], {})
+        ws.append([
+            r["token"], r["protocol"],
+            _fmt_pct(r["apy"]), _fmt_wow(r.get("apy_wow")),
+            _fmt_usd(r["tvl_usd"]),
+            meta.get("source", ""), meta.get("risk", ""),
+        ])
+    _auto_width(ws)
+
+    # ── Sheet 2: Supply Rates ──
+    ws2 = wb.create_sheet("Supply Rates")
+    ws2.append([
+        "Protocol", "Chain", "Stablecoin",
+        "Supply APY (Base)", "Supply APY (Reward)", "Supply APY (Net)",
+        "WoW Change", "TVL", "Utilisation",
+    ])
+    _style_header(ws2)
+    for r in lending:
+        ws2.append([
+            r["protocol"], r["chain"], r["stablecoin"],
+            _fmt_pct(r["supply_apy_base"]), _fmt_pct(r["supply_apy_reward"]),
+            _fmt_pct(r["supply_apy_net"]), _fmt_wow(r.get("supply_apy_wow")),
+            _fmt_usd(r["tvl_usd"]), _fmt_pct(r.get("utilisation")),
+        ])
+    _auto_width(ws2)
+
+    # ── Sheet 3: Borrow Rates ──
+    borrow_pools = sorted(
+        [r for r in lending if r.get("borrow_apy_base") is not None],
+        key=lambda x: x.get("borrow_apy_net") or 999,
+    )
+    ws3 = wb.create_sheet("Borrow Rates")
+    ws3.append([
+        "Protocol", "Chain", "Stablecoin",
+        "Borrow APY (Base)", "Borrow APY (Reward)", "Net Borrow Cost",
+        "WoW Change", "Available Liquidity",
+    ])
+    _style_header(ws3)
+    for r in borrow_pools:
+        available = (r.get("total_supply_usd") or 0) - (r.get("total_borrow_usd") or 0)
+        ws3.append([
+            r["protocol"], r["chain"], r["stablecoin"],
+            _fmt_pct(r["borrow_apy_base"]), _fmt_pct(r.get("borrow_apy_reward")),
+            _fmt_pct(r.get("borrow_apy_net")), _fmt_wow(r.get("borrow_apy_wow")),
+            _fmt_usd(available if available > 0 else 0),
+        ])
+    _auto_width(ws3)
+
+    # ── Sheet 4: Macro ──
+    ws4 = wb.create_sheet("Macro")
+    ws4.append(["Metric", "Value"])
+    _style_header(ws4)
+    ws4.append(["Fed Funds Rate", _fmt_pct(macro.get("fed_funds_rate"))])
+    ws4.append(["Total Stablecoin Mcap", _fmt_usd(macro.get("total_stablecoin_mcap"))])
+    ws4.append(["Date", datetime.now().strftime("%Y-%m-%d")])
+    ws4.append([])
+    ws4.append(["Top Stablecoins by Market Cap", ""])
+    ws4.append(["Symbol", "Market Cap"])
+    for cell in ws4[ws4.max_row]:
+        cell.font = header_font
+        cell.fill = header_fill
+    for coin in macro.get("top_stablecoins", []):
+        ws4.append([coin["symbol"], _fmt_usd(coin["mcap"])])
+    _auto_width(ws4)
+
+    wb.save(path)
+    print(f"[OK] {path} (combined workbook)")
+    return path
+
+
 def export_all(native_yields: list, lending: list, macro: dict) -> None:
     """Run all exports."""
     export_native_yields_csv(native_yields)
     export_supply_rates_csv(lending)
     export_borrow_rates_csv(lending)
     export_macro_csv(macro)
+    export_combined_xlsx(native_yields, lending, macro)
     summary = export_summary(native_yields, lending, macro)
     export_to_google_sheets(native_yields, lending, macro)
 
